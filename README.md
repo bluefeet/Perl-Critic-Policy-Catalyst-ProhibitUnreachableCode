@@ -7,9 +7,18 @@ be executed.
 
 ...
 
+# SUPPORT
+
+Please submit bugs and feature requests to the
+Perl-Critic-Policy-ProhibitDeadCode GitHub issue tracker:
+
+[https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode/issues](https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode/issues)
+
 # AUTHORS
 
-    Aran Clary Deltac <bluefeet@gmail.com>
+```
+Aran Clary Deltac <bluefeet@gmail.com>
+```
 
 # ACKNOWLEDGEMENTS
 

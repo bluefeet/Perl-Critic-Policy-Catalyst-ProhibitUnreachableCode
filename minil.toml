@@ -1,2 +1,3 @@
 name = "Perl-Critic-Policy-ProhibitDeadCode"
 authority="cpan:BLUEFEET"
+markdown_maker = "Pod::Markdown::Github"

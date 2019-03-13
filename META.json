@@ -56,8 +56,19 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode/issues"
+      },
+      "homepage" : "https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode.git",
+         "web" : "https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode"
+      }
+   },
    "version" : "0.01",
    "x_authority" : "cpan:BLUEFEET",
-   "x_serialization_backend" : "JSON::PP version 2.97001",
+   "x_serialization_backend" : "JSON::PP version 4.02",
    "x_static_install" : 1
 }
