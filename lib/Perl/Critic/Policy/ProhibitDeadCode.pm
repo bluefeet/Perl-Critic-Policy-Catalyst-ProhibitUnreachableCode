@@ -1,88 +1,98 @@
 package Perl::Critic::Policy::ProhibitDeadCode;
+#package Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode;
 use 5.008001;
 use strict;
 use warnings;
 our $VERSION = '0.01';
 
 use Readonly;
-use Perl::Critic::Utils qw{ :severities :classification :ppi };
 
+use Perl::Critic::Utils qw{ :severities :data_conversion :classification };
 use base 'Perl::Critic::Policy';
 
-Readonly::Scalar my $DESC => q{Code that cannot logically ever be executed};
-Readonly::Scalar my $EXPL => q{Code must be logically reachable to execute};
+Readonly::Array my @TERMINALS => qw( die exit croak confess );
+Readonly::Hash  my %TERMINALS => hashify( @TERMINALS );
 
-sub supported_parameters { return() }
-sub default_severity     { return $SEVERITY_HIGH }
-sub default_themes       { return qw( bugs ) }
+Readonly::Array my @CONDITIONALS => qw( if unless foreach while until for );
+Readonly::Hash  my %CONDITIONALS => hashify( @CONDITIONALS );
+
+Readonly::Array my @OPERATORS => qw( && || // and or err ? );
+Readonly::Hash  my %OPERATORS => hashify( @OPERATORS );
+
+#-----------------------------------------------------------------------------
+
+Readonly::Scalar my $DESC => q{Unreachable code};
+Readonly::Scalar my $EXPL => q{Consider removing it};
+
+#-----------------------------------------------------------------------------
+
+sub supported_parameters { return ()                 }
+sub default_severity     { return $SEVERITY_HIGH     }
+sub default_themes       { return qw( core bugs certrec )    }
 sub applies_to           { return 'PPI::Token::Word' }
 
+#-----------------------------------------------------------------------------
+
 sub violates {
-    my ($self, $start_word) = @_;
+    my ( $self, $elem, undef ) = @_;
 
-    # Is this statement terminating?
-    return if $start_word->content() ne 'exit';
+    my $statement = $elem->statement();
+    return if not $statement;
 
-    # Is this statement optional?
-    my $is_optional = 0;
-    my $word = $start_word->snext_sibling();
-    while ($word) {
-        if (
-            $word->isa('PPI::Token::Word') and
-            $word->content() =~ m{^(?:if|unless)$}
-        ) {
-            $is_optional = 1;
-            last;
-        }
+    # We check to see if this is an interesting token before calling
+    # is_function_call().  This weeds out most candidate tokens and
+    # prevents us from having to make an expensive function call.
 
-        $word = $word->snext_sibling();
+    return if ( !exists $TERMINALS{$elem} ) &&
+        ( !$statement->isa('PPI::Statement::Break') );
+
+    return if not is_function_call($elem);
+
+    # Scan the enclosing statement for conditional keywords or logical
+    # operators.  If any are found, then this the following statements
+    # could _potentially_ be executed, so this policy is satisfied.
+
+    # NOTE: When the first operand in an boolean expression is
+    # C<croak> or C<die>, etc., the second operand is technically
+    # unreachable.  But this policy doesn't catch that situation.
+
+    for my $child ( $statement->schildren() ) {
+        return if $child->isa('PPI::Token::Operator') && exists $OPERATORS{$child};
+        return if $child->isa('PPI::Token::Word') && exists $CONDITIONALS{$child};
     }
-    return if $is_optional;
 
-    # Are there more statements?
-    my $start_statement = $start_word->parent();
-    my $next_statement = $start_statement->snext_sibling();
-    return if !$next_statement;
-
-    # Lets see if any of them are run-time statements as compile-time
-    # statements are a-ok.
-    my $found_run_time_statements = 0;
-    while ($next_statement) {
-        my $statement = $next_statement;
-        $next_statement = $statement->snext_sibling();
-
-        next if _is_named_sub( $statement );
-
-        $found_run_time_statements = 1;
-        last;
-    }
-    return if !$found_run_time_statements;
-
-    # So, we found a non-optional terminating statement followed
-    # by run-time statements, aka Dead Code.
-    return $self->violation( $DESC, $EXPL, $start_word );
+    return $self->_gather_violations($statement);
 }
 
-sub _is_named_sub {
-    my ($statement) = @_;
+sub _gather_violations {
+    my ($self, $statement) = @_;
 
-    my $sub_word = $statement->schild(0);
-    return 0 if !$sub_word;
-    return 0 if !$sub_word->isa('PPI::Token::Word');
-    return 0 if !$sub_word->content() eq 'sub';
+    # If we get here, then the statement contained an unconditional
+    # die or exit or return.  Then all the subsequent sibling
+    # statements are unreachable, except for those that have labels,
+    # which could be reached from anywhere using C<goto>.  Subroutine
+    # declarations are also exempt for the same reason.  "use" and
+    # "our" statements are exempt because they happen at compile time.
 
-    my $name_word = $sub_word->snext_sibling();
-    return 0 if !$name_word;
-    return 0 if !$name_word->isa('PPI::Token::Word');
+    my @violations = ();
+    while ( $statement = $statement->snext_sibling() ) {
+        my @children = $statement->schildren();
+        last if @children && $children[0]->isa('PPI::Token::Label');
+        next if $statement->isa('PPI::Statement::Sub');
+        next if $statement->isa('PPI::Statement::End');
+        next if $statement->isa('PPI::Statement::Data');
+        next if $statement->isa('PPI::Statement::Package');
 
-    my $block = $name_word->snext_sibling();
-    return 0 if !$block;
-    return 0 if !$block->isa('PPI::Structure::Block');
+        next if $statement->isa('PPI::Statement::Include') &&
+            $statement->type() ne 'require';
 
-    my $nothing = $block->snext_sibling();
-    return 0 if $nothing;
+        next if $statement->isa('PPI::Statement::Variable') &&
+            $statement->type() eq 'our';
 
-    return 1;
+        push @violations, $self->violation( $DESC, $EXPL, $statement );
+    }
+
+    return @violations;
 }
 
 1;
@@ -124,3 +134,11 @@ it under the same terms as Perl itself.
 
 =cut
 
+# Local Variables:
+#   mode: cperl
+#   cperl-indent-level: 4
+#   fill-column: 78
+#   indent-tabs-mode: nil
+#   c-indentation-style: bsd
+# End:
+# ex: set ts=8 sts=4 sw=4 tw=78 ft=perl expandtab shiftround :
