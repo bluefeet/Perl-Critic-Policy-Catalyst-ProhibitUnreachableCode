@@ -7,8 +7,8 @@ use Test2::V0;
 use Perl::Critic;
 
 my @tests = (
-    [GoodExits      => 1],
-    [BadExitRuntime => 0],
+    [Good => 1],
+    [Bad  => 0],
 );
 
 foreach my $test (@tests) {
@@ -25,6 +25,8 @@ foreach my $test (@tests) {
             (@violations == 0),
             "$package should NOT violate",
         );
+
+        diag "VIOLATION: $_" for @violations;
     }
     else {
         ok(
