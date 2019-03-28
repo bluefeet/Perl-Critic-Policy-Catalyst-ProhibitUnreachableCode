@@ -14,3 +14,9 @@
     $c->detach;
     sub foo { }
 }
+
+{
+  package Foo::Controller::Root;
+  print "hi!";
+  $self->foo_and_detach;
+}

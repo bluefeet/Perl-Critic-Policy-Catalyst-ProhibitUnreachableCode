@@ -7,8 +7,9 @@ use Test2::V0;
 use Perl::Critic;
 
 my @tests = (
-    [Good => 1],
-    [Bad  => 0],
+    [Good          => 1],
+    [BadContext    => 0],
+    [BadController => 0],
 );
 
 foreach my $test (@tests) {
@@ -17,6 +18,10 @@ foreach my $test (@tests) {
     my $file = "t/$package.pm";
     my $critic = Perl::Critic->new(
         '-single-policy' => 'Catalyst::ProhibitUnreachableCode',
+    );
+    $critic->add_policy(
+        '-policy' => 'Catalyst::ProhibitUnreachableCode',
+        '-params' => { controller_methods => 'foo_and_detach' },
     );
     my @violations = $critic->critique($file);
 
@@ -33,6 +38,8 @@ foreach my $test (@tests) {
             (@violations > 0),
             "$package should violate",
         );
+
+        #diag "VIOLATION: $_" for @violations;
     }
 }
 

@@ -21,12 +21,18 @@ Readonly::Scalar my $EXPL => q{Consider removing it};
 sub supported_parameters {
     return(
         {
-            name           => 'methods',
+            name           => 'context_methods',
             description    => 'Catalyst context methods which terminate execution',
             behavior       => 'string list',
             default_string => '',
             list_always_present_values =>
                 [qw( detach redirect_and_detach )],
+        },
+        {
+            name           => 'controller_methods',
+            description    => 'Catalyst controller methods which terminate execution',
+            behavior       => 'string list',
+            default_string => '',
         },
     );
 }
@@ -35,30 +41,21 @@ sub default_severity     { return $SEVERITY_HIGH     }
 sub default_themes       { return qw( core bugs certrec catalyst )    }
 sub applies_to           { return 'PPI::Token::Word' }
 
+my $in_controller_package = 0;
+
 sub violates {
     my ( $self, $elem, undef ) = @_;
+
+    if (is_package_declaration($elem)) {
+        $in_controller_package =
+            ("$elem" and $elem =~ m{::Controller::}) ? 1 : 0;
+    }
 
     my $statement = $elem->statement();
     return if not $statement;
 
-    my $is_terminating = 0;
-    my @methods = keys %{ $self->{_methods} };
-    foreach my $method (@methods) {
-        next if $elem ne $method;
-        $is_terminating = 1;
-        last;
-    }
-    return if !$is_terminating;
-
-    my $prev = $elem->sprevious_sibling();
-    return if !$prev;
-    return if $prev ne '->';
-    return if !$prev->isa('PPI::Token::Operator');
-
-    $prev = $prev->sprevious_sibling();
-    return if !$prev;
-    return if $prev ne '$c';
-    return if !$prev->isa('PPI::Token::Symbol');
+    return unless $self->_is_terminating_context_method( $elem )
+           or $self->_is_terminating_controller_method( $elem );
 
     # We might as well call is_method_call() just in case its smarts
     # get upgraded in the future, but for now this is a noop if we've
@@ -71,6 +68,58 @@ sub violates {
     }
 
     return $self->_gather_violations($statement);
+}
+
+sub _is_terminating_context_method {
+    my ($self, $elem) = @_;
+
+    my $found_method = 0;
+    my @methods = keys %{ $self->{_context_methods} };
+    foreach my $method (@methods) {
+        next if $elem ne $method;
+        $found_method = 1;
+        last;
+    }
+    return 0 if !$found_method;
+
+    my $prev = $elem->sprevious_sibling();
+    return 0 if !$prev;
+    return 0 if $prev ne '->';
+    return 0 if !$prev->isa('PPI::Token::Operator');
+
+    $prev = $prev->sprevious_sibling();
+    return 0 if !$prev;
+    return 0 if $prev ne '$c';
+    return 0 if !$prev->isa('PPI::Token::Symbol');
+
+    return 1;
+}
+
+sub _is_terminating_controller_method {
+    my ($self, $elem) = @_;
+
+    return 0 if !$in_controller_package;
+
+    my $found_method = 0;
+    my @methods = keys %{ $self->{_controller_methods} };
+    foreach my $method (@methods) {
+        next if $elem ne $method;
+        $found_method = 1;
+        last;
+    }
+    return 0 if !$found_method;
+
+    my $prev = $elem->sprevious_sibling();
+    return 0 if !$prev;
+    return 0 if $prev ne '->';
+    return 0 if !$prev->isa('PPI::Token::Operator');
+
+    $prev = $prev->sprevious_sibling();
+    return 0 if !$prev;
+    return 0 if $prev ne '$self';
+    return 0 if !$prev->isa('PPI::Token::Symbol');
+
+    return 1;
 }
 
 sub _gather_violations {
@@ -124,13 +173,15 @@ L<Catalyst::Plugin::RedirectAndDetach>.
 
 =head1 PARAMETERS
 
+=head2 context_methods
+
 By default this policy looks for the C<detach> and C<redirect_and_detach>
-context methods.  You can specify additional methods to look for with
-the C<methods> parameter.  In your C<.perlcriticrc> this would look
-something like:
+context methods.  You can specify additional context methods to look for
+with the C<context_methods> parameter.  In your C<.perlcriticrc> this
+would look something like:
 
     [Catalyst::ProhibitUnreachableCode]
-    methods = my_detaching_method my_other_detaching_method
+    context_methods = my_detaching_method my_other_detaching_method
 
 This policy would then consider all of the following lines as
 terminating statements:
@@ -139,6 +190,23 @@ terminating statements:
     $c->redirect_and_detach();
     $c->my_detaching_method();
     $c->my_other_detaching_method();
+
+=head2 controller_methods
+
+Sometimes controllers have in-house methods which call C<detach>, you
+can specify those:
+
+    [Catalyst::ProhibitUnreachableCode]
+    controller_methods = foo bar
+
+Then this policy would look for any package with C<::Controller::> in
+its name and would consider the following lines as terminating
+statements:
+
+    $self->foo();
+    $self->bar();
+
+There are no default methods for this parameter.
 
 =head1 SUPPORT
 
