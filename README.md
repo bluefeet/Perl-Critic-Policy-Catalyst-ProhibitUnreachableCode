@@ -17,6 +17,31 @@ $c->detach();
 $c->redirect_and_detach();
 ```
 
+The `redirect_and_detach` context method is available if you are using
+[Catalyst::Plugin::RedirectAndDetach](https://metacpan.org/pod/Catalyst::Plugin::RedirectAndDetach).
+
+# PARAMETERS
+
+By default this policy looks for the `detach` and `redirect_and_detach`
+context methods.  You can specify additional methods to look for with
+the `methods` parameter.  In your `.perlcriticrc` this would look
+something like:
+
+```perl
+[Catalyst::ProhibitUnreachableCode]
+methods = my_detaching_method my_other_detaching_method
+```
+
+This policy would then considering all of the following lines as
+terminating statements:
+
+```perl
+$c->detach();
+$c->redirect_and_detach();
+$c->my_detaching_method();
+$c->my_other_detaching_method();
+```
+
 # SUPPORT
 
 Please submit bugs and feature requests to the

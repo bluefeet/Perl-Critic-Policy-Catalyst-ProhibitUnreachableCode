@@ -18,9 +18,21 @@ Readonly::Hash  my %OPERATORS => hashify( @OPERATORS );
 Readonly::Scalar my $DESC => q{Unreachable code};
 Readonly::Scalar my $EXPL => q{Consider removing it};
 
-sub supported_parameters { return ()                 }
+sub supported_parameters {
+    return(
+        {
+            name           => 'methods',
+            description    => 'Catalyst context methods which terminate execution',
+            behavior       => 'string list',
+            default_string => '',
+            list_always_present_values =>
+                [qw( detach redirect_and_detach )],
+        },
+    );
+}
+
 sub default_severity     { return $SEVERITY_HIGH     }
-sub default_themes       { return qw( core bugs certrec )    }
+sub default_themes       { return qw( core bugs certrec catalyst )    }
 sub applies_to           { return 'PPI::Token::Word' }
 
 sub violates {
@@ -29,8 +41,14 @@ sub violates {
     my $statement = $elem->statement();
     return if not $statement;
 
-    return if $elem ne 'detach'
-           and $elem ne 'redirect_and_detach';
+    my $is_terminating = 0;
+    my @methods = keys %{ $self->{_methods} };
+    foreach my $method (@methods) {
+        next if $elem ne $method;
+        $is_terminating = 1;
+        last;
+    }
+    return if !$is_terminating;
 
     my $prev = $elem->sprevious_sibling();
     return if !$prev;
@@ -100,6 +118,27 @@ Catalyst specific bits of code as signifying a terminating statement:
 
     $c->detach();
     $c->redirect_and_detach();
+
+The C<redirect_and_detach> context method is available if you are using
+L<Catalyst::Plugin::RedirectAndDetach>.
+
+=head1 PARAMETERS
+
+By default this policy looks for the C<detach> and C<redirect_and_detach>
+context methods.  You can specify additional methods to look for with
+the C<methods> parameter.  In your C<.perlcriticrc> this would look
+something like:
+
+    [Catalyst::ProhibitUnreachableCode]
+    methods = my_detaching_method my_other_detaching_method
+
+This policy would then considering all of the following lines as
+terminating statements:
+
+    $c->detach();
+    $c->redirect_and_detach();
+    $c->my_detaching_method();
+    $c->my_other_detaching_method();
 
 =head1 SUPPORT
 
