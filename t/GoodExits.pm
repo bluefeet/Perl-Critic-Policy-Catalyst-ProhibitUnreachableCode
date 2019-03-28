@@ -1,16 +1,16 @@
-{ exit; }
+{ $c->detach; }
 
 {
     print "hi!";
-    exit;
+    $c->detach;
 }
 
 {
-    exit if 1;
+    $c->detach if 1;
     print "hi!";
 }
 
 {
-    exit;
+    $c->detach;
     sub foo { }
 }

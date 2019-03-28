@@ -1,2 +1,2 @@
-exit;
+$c->detach;
 print "hi!";

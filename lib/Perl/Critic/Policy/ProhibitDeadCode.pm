@@ -10,9 +10,6 @@ use Readonly;
 use Perl::Critic::Utils qw{ :severities :data_conversion :classification };
 use base 'Perl::Critic::Policy';
 
-Readonly::Array my @TERMINALS => qw( die exit croak confess );
-Readonly::Hash  my %TERMINALS => hashify( @TERMINALS );
-
 Readonly::Array my @CONDITIONALS => qw( if unless foreach while until for );
 Readonly::Hash  my %CONDITIONALS => hashify( @CONDITIONALS );
 
@@ -40,13 +37,22 @@ sub violates {
     return if not $statement;
 
     # We check to see if this is an interesting token before calling
-    # is_function_call().  This weeds out most candidate tokens and
+    # is_method_call().  This weeds out most candidate tokens and
     # prevents us from having to make an expensive function call.
 
-    return if ( !exists $TERMINALS{$elem} ) &&
-        ( !$statement->isa('PPI::Statement::Break') );
+    return if $elem ne 'detach';
 
-    return if not is_function_call($elem);
+    my $prev = $elem->sprevious_sibling();
+    return if !$prev;
+    return if $prev ne '->';
+    return if !$prev->isa('PPI::Token::Operator');
+
+    $prev = $prev->sprevious_sibling();
+    return if !$prev;
+    return if $prev ne '$c';
+    return if !$prev->isa('PPI::Token::Symbol');
+
+    return if not is_method_call($elem);
 
     # Scan the enclosing statement for conditional keywords or logical
     # operators.  If any are found, then this the following statements
