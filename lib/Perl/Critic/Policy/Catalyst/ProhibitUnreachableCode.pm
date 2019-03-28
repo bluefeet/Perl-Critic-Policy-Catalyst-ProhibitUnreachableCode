@@ -132,7 +132,7 @@ something like:
     [Catalyst::ProhibitUnreachableCode]
     methods = my_detaching_method my_other_detaching_method
 
-This policy would then considering all of the following lines as
+This policy would then consider all of the following lines as
 terminating statements:
 
     $c->detach();
