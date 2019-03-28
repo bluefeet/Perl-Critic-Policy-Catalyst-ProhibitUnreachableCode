@@ -1,5 +1,4 @@
-package Perl::Critic::Policy::ProhibitDeadCode;
-#package Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode;
+package Perl::Critic::Policy::Catalyst::ProhibitUnreachableCode;
 use 5.008001;
 use strict;
 use warnings;
@@ -108,8 +107,8 @@ __END__
 
 =head1 NAME
 
-Perl::Critic::Policy::ProhibitDeadCode - Detect code which will never
-be executed.
+Perl::Critic::Policy::Catalyst::ProhibitUnreachableCode -
+Detect code which will never be executed.
 
 =head1 DESCRIPTION
 
@@ -118,13 +117,18 @@ be executed.
 =head1 SUPPORT
 
 Please submit bugs and feature requests to the
-Perl-Critic-Policy-ProhibitDeadCode GitHub issue tracker:
+Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode GitHub issue tracker:
 
-L<https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode/issues>
+L<https://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode/issues>
 
 =head1 AUTHORS
 
     Aran Clary Deltac <bluefeet@gmail.com>
+    Peter Guzis <pguzis@cpan.org>
+
+This module is a fork of
+L<Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode>
+and modified to fit.
 
 =head1 ACKNOWLEDGEMENTS
 

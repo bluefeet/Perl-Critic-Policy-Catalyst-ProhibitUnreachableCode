@@ -28,4 +28,4 @@ cover_db/
 
 MYMETA.*
 
-/Perl-Critic-Policy-ProhibitDeadCode-*
+/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode-*

@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : 2
    },
-   "name" : "Perl-Critic-Policy-ProhibitDeadCode",
+   "name" : "Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode",
    "no_index" : {
       "directory" : [
          "t",
@@ -58,13 +58,13 @@
    "release_status" : "unstable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode/issues"
+         "web" : "https://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode/issues"
       },
-      "homepage" : "https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode",
+      "homepage" : "https://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode",
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode.git",
-         "web" : "https://github.com/bluefeet/Perl-Critic-Policy-ProhibitDeadCode"
+         "url" : "git://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode.git",
+         "web" : "https://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode"
       }
    },
    "version" : "0.01",

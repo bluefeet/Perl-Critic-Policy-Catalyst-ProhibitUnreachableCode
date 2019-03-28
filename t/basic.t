@@ -16,7 +16,7 @@ foreach my $test (@tests) {
 
     my $file = "t/$package.pm";
     my $critic = Perl::Critic->new(
-        '-single-policy' => 'ProhibitDeadCode',
+        '-single-policy' => 'Catalyst::ProhibitUnreachableCode',
     );
     my @violations = $critic->critique($file);
 
