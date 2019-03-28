@@ -1,11 +1,21 @@
 # NAME
 
 Perl::Critic::Policy::Catalyst::ProhibitUnreachableCode -
-Detect code which will never be executed.
+Don't write code after an unconditional Catalyst detach.
 
 # DESCRIPTION
 
-...
+This module was forked from
+[Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode](https://metacpan.org/pod/Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode)
+version `1.132` and modified to fit.
+
+The primary difference is this module looks for these two
+Catalyst specific bits of code as signifying a terminating statement:
+
+```
+$c->detach();
+$c->redirect_and_detach();
+```
 
 # SUPPORT
 
@@ -20,10 +30,6 @@ Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode GitHub issue tracker:
 Aran Clary Deltac <bluefeet@gmail.com>
 Peter Guzis <pguzis@cpan.org>
 ```
-
-This module is a fork of
-[Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode](https://metacpan.org/pod/Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode)
-and modified to fit.
 
 # ACKNOWLEDGEMENTS
 

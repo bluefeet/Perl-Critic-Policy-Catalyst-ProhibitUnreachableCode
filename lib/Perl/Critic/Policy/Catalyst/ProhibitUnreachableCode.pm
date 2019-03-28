@@ -15,19 +15,13 @@ Readonly::Hash  my %CONDITIONALS => hashify( @CONDITIONALS );
 Readonly::Array my @OPERATORS => qw( && || // and or err ? );
 Readonly::Hash  my %OPERATORS => hashify( @OPERATORS );
 
-#-----------------------------------------------------------------------------
-
 Readonly::Scalar my $DESC => q{Unreachable code};
 Readonly::Scalar my $EXPL => q{Consider removing it};
-
-#-----------------------------------------------------------------------------
 
 sub supported_parameters { return ()                 }
 sub default_severity     { return $SEVERITY_HIGH     }
 sub default_themes       { return qw( core bugs certrec )    }
 sub applies_to           { return 'PPI::Token::Word' }
-
-#-----------------------------------------------------------------------------
 
 sub violates {
     my ( $self, $elem, undef ) = @_;
@@ -35,11 +29,8 @@ sub violates {
     my $statement = $elem->statement();
     return if not $statement;
 
-    # We check to see if this is an interesting token before calling
-    # is_method_call().  This weeds out most candidate tokens and
-    # prevents us from having to make an expensive function call.
-
-    return if $elem ne 'detach';
+    return if $elem ne 'detach'
+           and $elem ne 'redirect_and_detach';
 
     my $prev = $elem->sprevious_sibling();
     return if !$prev;
@@ -51,15 +42,10 @@ sub violates {
     return if $prev ne '$c';
     return if !$prev->isa('PPI::Token::Symbol');
 
+    # We might as well call is_method_call() just in case its smarts
+    # get upgraded in the future, but for now this is a noop if we've
+    # already gotten this far.
     return if not is_method_call($elem);
-
-    # Scan the enclosing statement for conditional keywords or logical
-    # operators.  If any are found, then this the following statements
-    # could _potentially_ be executed, so this policy is satisfied.
-
-    # NOTE: When the first operand in an boolean expression is
-    # C<croak> or C<die>, etc., the second operand is technically
-    # unreachable.  But this policy doesn't catch that situation.
 
     for my $child ( $statement->schildren() ) {
         return if $child->isa('PPI::Token::Operator') && exists $OPERATORS{$child};
@@ -71,13 +57,6 @@ sub violates {
 
 sub _gather_violations {
     my ($self, $statement) = @_;
-
-    # If we get here, then the statement contained an unconditional
-    # die or exit or return.  Then all the subsequent sibling
-    # statements are unreachable, except for those that have labels,
-    # which could be reached from anywhere using C<goto>.  Subroutine
-    # declarations are also exempt for the same reason.  "use" and
-    # "our" statements are exempt because they happen at compile time.
 
     my @violations = ();
     while ( $statement = $statement->snext_sibling() ) {
@@ -108,11 +87,19 @@ __END__
 =head1 NAME
 
 Perl::Critic::Policy::Catalyst::ProhibitUnreachableCode -
-Detect code which will never be executed.
+Don't write code after an unconditional Catalyst detach.
 
 =head1 DESCRIPTION
 
-...
+This module was forked from
+L<Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode>
+version C<1.132> and modified to fit.
+
+The primary difference is this module looks for these two
+Catalyst specific bits of code as signifying a terminating statement:
+
+    $c->detach();
+    $c->redirect_and_detach();
 
 =head1 SUPPORT
 
@@ -125,10 +112,6 @@ L<https://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCod
 
     Aran Clary Deltac <bluefeet@gmail.com>
     Peter Guzis <pguzis@cpan.org>
-
-This module is a fork of
-L<Perl::Critic::Policy::ControlStructures::ProhibitUnreachableCode>
-and modified to fit.
 
 =head1 ACKNOWLEDGEMENTS
 

@@ -1,5 +1,5 @@
 {
-   "abstract" : "Detect code which will never be executed.",
+   "abstract" : "Don't write code after an unconditional Catalyst detach.",
    "author" : [
       "Aran Clary Deltac <bluefeet@gmail.com>"
    ],
