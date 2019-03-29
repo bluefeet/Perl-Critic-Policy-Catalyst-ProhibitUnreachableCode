@@ -41,15 +41,8 @@ sub default_severity     { return $SEVERITY_HIGH     }
 sub default_themes       { return qw( core bugs certrec catalyst )    }
 sub applies_to           { return 'PPI::Token::Word' }
 
-my $in_controller_package = 0;
-
 sub violates {
     my ( $self, $elem, undef ) = @_;
-
-    if (is_package_declaration($elem)) {
-        $in_controller_package =
-            ("$elem" and $elem =~ m{::Controller::}) ? 1 : 0;
-    }
 
     my $statement = $elem->statement();
     return if not $statement;
@@ -98,8 +91,6 @@ sub _is_terminating_context_method {
 sub _is_terminating_controller_method {
     my ($self, $elem) = @_;
 
-    return 0 if !$in_controller_package;
-
     my $found_method = 0;
     my @methods = keys %{ $self->{_controller_methods} };
     foreach my $method (@methods) {
@@ -119,7 +110,34 @@ sub _is_terminating_controller_method {
     return 0 if $prev ne '$self';
     return 0 if !$prev->isa('PPI::Token::Symbol');
 
+    # Save this check for last as its likely the most expensive.
+    return 0 if $self->_find_package_name( $elem ) !~ m{::Controller::};
+
     return 1;
+}
+
+sub _find_package_name {
+    my ($self, $element) = @_;
+
+    my $original = $element;
+
+    while ($element) {
+        if ($element->isa('PPI::Statement::Package')) {
+            # If this package statements is a block package, meaning: package { # stuff in package }
+            # then if we're a descendant of it its our package.
+            return $element->namespace() if $element->ancestor_of( $original );
+
+            # If we've hit a non-block package then thats our package.
+            my $blocks = $element->find_any('PPI::Structure::Block');
+            return $element->namespace() if !$blocks;
+        }
+
+        # Keep walking backwards until we match the above logic or we get to
+        # the document root (main).
+        $element = $element->sprevious_sibling() || $element->parent();
+    }
+
+    return 'main';
 }
 
 sub _gather_violations {

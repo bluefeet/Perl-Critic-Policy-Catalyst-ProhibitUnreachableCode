@@ -20,3 +20,9 @@
   print "hi!";
   $self->foo_and_detach;
 }
+
+{
+  package Bar::Cooontroller::Root;
+  $self->foo_and_detach;
+  print "hi!";
+}
