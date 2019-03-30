@@ -37,23 +37,25 @@ sub supported_parameters {
     );
 }
 
-sub default_severity     { return $SEVERITY_HIGH     }
-sub default_themes       { return qw( core bugs certrec catalyst )    }
-sub applies_to           { return 'PPI::Token::Word' }
+sub default_severity { $SEVERITY_HIGH }
+sub default_themes   { qw( core bugs certrec catalyst ) }
+sub applies_to       { 'PPI::Token::Word' }
 
 sub violates {
-    my ( $self, $elem, undef ) = @_;
+    my ($self, $element) = @_;
 
-    my $statement = $elem->statement();
-    return if not $statement;
+    return if !is_method_call( $element );
 
-    return unless $self->_is_terminating_context_method( $elem )
-           or $self->_is_terminating_controller_method( $elem );
+    my $statement = $element->statement();
+    return if !$statement;
 
-    # We might as well call is_method_call() just in case its smarts
-    # get upgraded in the future, but for now this is a noop if we've
-    # already gotten this far.
-    return if not is_method_call($elem);
+    my @context_methods = keys %{ $self->{_context_methods} };
+    my @controller_methods = keys %{ $self->{_controller_methods} };
+
+    return unless (
+        _is_terminating_context_method( $element, \@context_methods ) or
+        _is_terminating_controller_method( $element, \@controller_methods )
+    );
 
     for my $child ( $statement->schildren() ) {
         return if $child->isa('PPI::Token::Operator') && exists $OPERATORS{$child};
@@ -64,18 +66,17 @@ sub violates {
 }
 
 sub _is_terminating_context_method {
-    my ($self, $elem) = @_;
+    my ($element, $methods) = @_;
 
     my $found_method = 0;
-    my @methods = keys %{ $self->{_context_methods} };
-    foreach my $method (@methods) {
-        next if $elem ne $method;
+    foreach my $method (@$methods) {
+        next if $element ne $method;
         $found_method = 1;
         last;
     }
     return 0 if !$found_method;
 
-    my $prev = $elem->sprevious_sibling();
+    my $prev = $element->sprevious_sibling();
     return 0 if !$prev;
     return 0 if $prev ne '->';
     return 0 if !$prev->isa('PPI::Token::Operator');
@@ -89,18 +90,17 @@ sub _is_terminating_context_method {
 }
 
 sub _is_terminating_controller_method {
-    my ($self, $elem) = @_;
+    my ($element, $methods) = @_;
 
     my $found_method = 0;
-    my @methods = keys %{ $self->{_controller_methods} };
-    foreach my $method (@methods) {
-        next if $elem ne $method;
+    foreach my $method (@$methods) {
+        next if $element ne $method;
         $found_method = 1;
         last;
     }
     return 0 if !$found_method;
 
-    my $prev = $elem->sprevious_sibling();
+    my $prev = $element->sprevious_sibling();
     return 0 if !$prev;
     return 0 if $prev ne '->';
     return 0 if !$prev->isa('PPI::Token::Operator');
@@ -111,13 +111,13 @@ sub _is_terminating_controller_method {
     return 0 if !$prev->isa('PPI::Token::Symbol');
 
     # Save this check for last as its likely the most expensive.
-    return 0 if $self->_find_package_name( $elem ) !~ m{::Controller::};
+    return 0 if _find_package_name( $element ) !~ m{::Controller::};
 
     return 1;
 }
 
 sub _find_package_name {
-    my ($self, $element) = @_;
+    my ($element) = @_;
 
     my $original = $element;
 
