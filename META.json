@@ -67,7 +67,7 @@
          "web" : "https://github.com/bluefeet/Perl-Critic-Policy-Catalyst-ProhibitUnreachableCode"
       }
    },
-   "version" : "0.01",
+   "version" : "0.02",
    "x_authority" : "cpan:BLUEFEET",
    "x_contributors" : [
       "Aran Clary Deltac <aran@bluefeet.dev>"
