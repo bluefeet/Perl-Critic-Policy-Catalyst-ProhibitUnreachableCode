@@ -1,7 +1,6 @@
 # NAME
 
-Perl::Critic::Policy::Catalyst::ProhibitUnreachableCode -
-Don't write code after an unconditional Catalyst detach.
+Perl::Critic::Policy::Catalyst::ProhibitUnreachableCode - Don't write code after an unconditional Catalyst detach.
 
 # DESCRIPTION
 
