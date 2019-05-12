@@ -2,6 +2,7 @@ Revision history for Perl extension Perl-Critic-Policy-Catalyst-ProhibitUnreacha
 
 {{$NEXT}}
 
+ - Switch to the GNU General Public License version 3.
  - Fix POD for CPANTS parsing.
 
 0.01 2019-03-30T00:15:52Z
